@@ -1,0 +1,144 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: vinr-rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: vinr
+      RABBITMQ_DEFAULT_PASS: vinr
+  user_mgr_db:
+    image: postgres:alpine
+    container_name: user_mgr_db
+    hostname: vinr-usermgr-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: vinr_users
+      POSTGRES_USER: "${USER}"
+      POSTGRES_PASSWORD: password
+      restart: unless-stopped
+  interaction_mgr_db:
+    image: postgres:alpine
+    container_name: interaction_mgr_db
+    hostname: vinr-interactionmgr-db
+    expose:
+      - "5433"
+    ports:
+      - "5433:5433"
+    environment:
+      POSTGRES_DB: vinr_interactions
+      POSTGRES_USER: "${USER}"
+      POSTGRES_PASSWORD: password
+      restart: unless-stopped
+    command: -p 5433
+  notification_mgr_db:
+    image: postgres:alpine
+    container_name: notification_mgr_db
+    hostname: vinr-notificationmgr-db
+    expose:
+      - "5434"
+    ports:
+      - "5434:5434"
+    environment:
+      POSTGRES_DB: vinr_notifications
+      POSTGRES_USER: "${USER}"
+      POSTGRES_PASSWORD: password
+      restart: unless-stopped
+    command: -p 5434
+  eureka:
+    image: vinr_eureka:latest
+    container_name: eureka_app
+    hostname: vinr-eureka
+    ports:
+      - "8761:8761"
+  apigateway:
+    image: vinr_apigateway:latest
+    container_name: apigateway_app
+    hostname: vinr-apigateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPNAME: APIGATEWAY
+      EUREKA_HOST: eureka
+      EUREKA_PORT: 8761
+    depends_on:
+      - eureka
+  user-mgr:
+    image: vinr_user_mgr:latest
+    container_name: user_mgr_app
+    hostname: vinr-usermgr
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DB_TYPE: postgresql
+      SPRING_APPNAME: USER-MGR
+      SPRING_DB_HOST: vinr-usermgr-db
+      SPRING_DB_PORT: 5432
+      SPRING_DATABASE: vinr_users
+      DB_USER: "${USER}"
+      DB_PASSWORD: password
+      EUREKA_HOST: eureka
+      EUREKA_PORT: 8761
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: vinr
+      RABBITMQ_PASS: vinr
+    depends_on:
+      - user_mgr_db
+      - apigateway
+      - eureka
+      - rabbitmq
+  interaction-mgr:
+    image: vinr_interaction_mgr:latest
+    container_name: interaction_mgr_app
+    hostname: vinr-interactionmgr
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DB_TYPE: postgresql
+      SPRING_APPNAME: INTERACTION-MGR
+      SPRING_DB_HOST: vinr-interactionmgr-db
+      SPRING_DB_PORT: 5433
+      SPRING_DATABASE: vinr_interactions
+      DB_USER: "${USER}"
+      DB_PASSWORD: password
+      EUREKA_HOST: eureka
+      EUREKA_PORT: 8761
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: vinr
+      RABBITMQ_PASS: vinr
+    depends_on:
+      - interaction_mgr_db
+      - apigateway
+      - eureka
+      - rabbitmq
+  notification-mgr:
+    image: vinr_notification_mgr:latest
+    container_name: notification_mgr_app
+    hostname: vinr-notificationmgr
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DB_TYPE: postgresql
+      SPRING_APPNAME: NOTIFICATION-MGR
+      SPRING_DB_HOST: vinr-notificationmgr-db
+      SPRING_DB_PORT: 5434
+      SPRING_DATABASE: vinr_notifications
+      DB_USER: "${USER}"
+      DB_PASSWORD: password
+      EUREKA_HOST: eureka
+      EUREKA_PORT: 8761
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: vinr
+      RABBITMQ_PASS: vinr
+    depends_on:
+      - notification_mgr_db
+      - apigateway
+      - eureka
+      - rabbitmq

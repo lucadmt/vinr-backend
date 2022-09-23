@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka
+
+      spring:
+        cloud:
+          gateway:
+
+
+spring:
+  application:
+    name: ${SPRING_APPNAME}
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+        reactive:
+          enabled: false
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+              - OPTIONS
+              - TRACE
+#      routes:
+#        - id: user_path
+#          uri: vinr-usermgr:8081
+#          predicates:
+#            - Path=/api/user/**
+#        - id: interaction_path
+#          uri: vinr-interactionmgr:8082
+#          predicates:
+#            - Path=/api/post/**
+#            - Path=/api/friends/**
+
+#logging:
+#  level:
+#    root: DEBUG
